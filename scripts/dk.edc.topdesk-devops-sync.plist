@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>dk.edc.topdesk-devops-sync</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/matiasgramkow/Development/edc-devops-service/scripts/run-daily-sync.sh</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>/Users/matiasgramkow/Development/edc-devops-service</string>
+
+  <!-- Kør kl. 09:00 hverdage (mandag=1 ... fredag=5) -->
+  <key>StartCalendarInterval</key>
+  <array>
+    <dict>
+      <key>Weekday</key><integer>1</integer>
+      <key>Hour</key><integer>9</integer>
+      <key>Minute</key><integer>0</integer>
+    </dict>
+    <dict>
+      <key>Weekday</key><integer>2</integer>
+      <key>Hour</key><integer>9</integer>
+      <key>Minute</key><integer>0</integer>
+    </dict>
+    <dict>
+      <key>Weekday</key><integer>3</integer>
+      <key>Hour</key><integer>9</integer>
+      <key>Minute</key><integer>0</integer>
+    </dict>
+    <dict>
+      <key>Weekday</key><integer>4</integer>
+      <key>Hour</key><integer>9</integer>
+      <key>Minute</key><integer>0</integer>
+    </dict>
+    <dict>
+      <key>Weekday</key><integer>5</integer>
+      <key>Hour</key><integer>9</integer>
+      <key>Minute</key><integer>0</integer>
+    </dict>
+  </array>
+
+  <!-- Hvis maskinen sov kl. 9, så kør så snart den vågner -->
+  <key>StartCalendarIntervalCatchUp</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>/Users/matiasgramkow/Library/Logs/edc-topdesk-sync/stdout.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/matiasgramkow/Library/Logs/edc-topdesk-sync/stderr.log</string>
+
+  <key>RunAtLoad</key>
+  <false/>
+</dict>
+</plist>

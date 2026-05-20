@@ -1,0 +1,164 @@
+@import "tailwindcss";
+
+@theme {
+  /*
+   * Research-backed dark theme (Material Design + Linear approach)
+   * Elevation = lighter surface, NOT white cards on dark
+   * Desaturated accents (~20pts lower) to avoid optical vibration
+   * Slight warm tint to avoid cold/sterile feel
+   */
+
+  /* Surfaces — elevation through lightness */
+  --color-bg-primary: #101014;       /* Page — deepest level */
+  --color-bg-secondary: #1a1a22;     /* Raised surface (sidebar headers, summary bar) */
+  --color-bg-card: #212130;          /* Cards & panels — clearly elevated */
+  --color-bg-card-hover: #2a2a3a;    /* Hover / interactive states */
+  --color-bg-input: #18181f;         /* Inputs — slightly recessed */
+
+  /* Borders — visible on all surface levels */
+  --color-border-default: #333346;
+  --color-border-focus: #5b8def;
+
+  /* Text — off-white hierarchy, never pure white */
+  --color-text-primary: #ececf0;     /* High emphasis — 93% */
+  --color-text-secondary: #a0a0b4;   /* Medium emphasis — 63% */
+  --color-text-muted: #686880;       /* Low emphasis — 41% */
+
+  /* Accents — desaturated for dark bg, each with clear purpose */
+  --color-accent-blue: #5b8def;      /* Blue: Calm — selection, links, Dev */
+  --color-accent-teal: #34c772;      /* Green: Growth — success, Done planning */
+  --color-accent-gold: #e8a840;      /* Amber: Energy — QA, estimates, hours */
+  --color-accent-red: #e84858;       /* Red: Attention — P1, errors, delete */
+
+  /* Staleness indicators */
+  --color-stale-fresh: #34c772;
+  --color-stale-aging: #e8a840;
+  --color-stale-stale: #e07030;
+  --color-stale-ancient: #e84858;
+
+  /* Work item types */
+  --color-type-bug: #e84858;
+  --color-type-task: #e8a840;
+  --color-type-story: #5b8def;
+  --color-type-feature: #9468d8;
+  --color-type-epic: #e07030;
+
+  --font-sans: "Inter", "Lato", system-ui, -apple-system, sans-serif;
+}
+
+html {
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+/* Light theme overrides */
+html[data-theme="light"] {
+  --color-bg-primary: #f4f5f7;
+  --color-bg-secondary: #e4e6ea;
+  --color-bg-card: #ffffff;
+  --color-bg-card-hover: #f0f1f4;
+  --color-bg-input: #ffffff;
+  --color-border-default: #c8ccd4;
+  --color-border-focus: #4a7dd0;
+  --color-text-primary: #1a1a2e;
+  --color-text-secondary: #4a4a68;
+  --color-text-muted: #7a7a96;
+  --color-accent-blue: #3b6fd0;
+  --color-accent-teal: #1a9c52;
+  --color-accent-gold: #c07820;
+  --color-accent-red: #d03040;
+  --color-stale-fresh: #1a9c52;
+  --color-stale-aging: #c07820;
+  --color-stale-stale: #c05020;
+  --color-stale-ancient: #d03040;
+  --color-type-bug: #d03040;
+  --color-type-task: #c07820;
+  --color-type-story: #3b6fd0;
+  --color-type-feature: #7850b8;
+  --color-type-epic: #c05020;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-default);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+html[data-theme="light"] ::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+}
+
+html[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: var(--color-border-default);
+}
+
+/* Rich HTML content from Azure DevOps (descriptions, AC) */
+.prose-devops {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+.prose-devops p { margin-bottom: 0.5em; }
+.prose-devops ul, .prose-devops ol { margin-left: 1.5em; margin-bottom: 0.5em; }
+.prose-devops ul { list-style-type: disc; }
+.prose-devops ol { list-style-type: decimal; }
+.prose-devops li { margin-bottom: 0.2em; }
+.prose-devops strong, .prose-devops b { font-weight: 600; }
+.prose-devops em, .prose-devops i { font-style: italic; }
+.prose-devops a { color: var(--color-accent-blue); text-decoration: underline; }
+.prose-devops a:hover { opacity: 0.8; }
+.prose-devops img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 0.5em 0;
+  cursor: zoom-in;
+  transition: opacity 0.15s;
+}
+.prose-devops img:hover {
+  opacity: 0.85;
+}
+.prose-devops pre, .prose-devops code {
+  background: var(--color-bg-input);
+  border-radius: 4px;
+  font-size: 0.875em;
+}
+.prose-devops pre { padding: 0.75em 1em; overflow-x: auto; margin-bottom: 0.5em; }
+.prose-devops code { padding: 0.1em 0.3em; }
+.prose-devops table { border-collapse: collapse; margin-bottom: 0.5em; }
+.prose-devops td, .prose-devops th {
+  border: 1px solid var(--color-border-default);
+  padding: 0.35em 0.65em;
+  text-align: left;
+}
+.prose-devops th { font-weight: 600; background: var(--color-bg-secondary); }
+.prose-devops hr { border-color: var(--color-border-default); margin: 0.75em 0; }
+.prose-devops h1, .prose-devops h2, .prose-devops h3, .prose-devops h4 {
+  font-weight: 600;
+  margin-top: 0.75em;
+  margin-bottom: 0.35em;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .sprint-3col {
+    flex-direction: column !important;
+  }
+  .sprint-3col > * {
+    width: 100% !important;
+    max-height: none !important;
+    position: static !important;
+  }
+}
