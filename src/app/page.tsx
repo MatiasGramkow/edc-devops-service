@@ -2,7 +2,6 @@
 
 import { Suspense, useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
 import clsx from "clsx";
 import { Header } from "@/components/Header";
 import { SprintPlanningView } from "@/components/SprintPlanningView";
@@ -171,7 +170,13 @@ function HomeContent() {
     return [...set].sort();
   }, [metadata.assignees, teamMembers]);
 
-  const { data: session } = useSession();
+  const [userName, setUserName] = useState<string | null>(null);
+  useEffect(() => {
+    fetch("/api/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setUserName(d?.user?.name ?? null))
+      .catch(() => setUserName(null));
+  }, []);
 
   return (
     <div className="min-h-screen bg-bg-primary">
@@ -181,8 +186,10 @@ function HomeContent() {
         onShortcutsOpen={() => setShortcutsOpen(true)}
         polling={polling}
         onPollingToggle={() => setPolling((p) => !p)}
-        userName={session?.user?.name}
-        onSignOut={() => signOut()}
+        userName={userName}
+        onSignOut={() => {
+          window.location.href = "/.auth/logout?post_logout_redirect_uri=/";
+        }}
       />
 
       <main className={clsx("space-y-6 py-8", activeTab === "sprint-planning" || activeTab === "refinement" || activeTab === "standup" ? "px-4" : "mx-auto max-w-7xl px-6")}>

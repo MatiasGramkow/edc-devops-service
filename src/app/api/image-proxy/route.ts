@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireUser } from "@/lib/auth/user";
 
 const ORG = process.env.AZURE_DEVOPS_ORG!;
 const PAT = process.env.AZURE_DEVOPS_PAT!;
 const AUTH = Buffer.from(`:${PAT}`).toString("base64");
 
 export async function GET(request: NextRequest) {
+  const { response: authResponse } = await requireUser();
+  if (authResponse) return authResponse;
+
   const url = request.nextUrl.searchParams.get("url");
   if (!url) {
     return NextResponse.json({ error: "Missing url parameter" }, { status: 400 });

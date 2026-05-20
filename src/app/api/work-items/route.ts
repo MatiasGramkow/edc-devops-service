@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { queryWorkItems, queryPBIsWithChildren, querySprintPlanningItems, queryUnfinishedSprintItems, queryCompletedSprintItems, queryRefinementItems, queryCleanupItems, queryBacklogHealth, getProjectMetadata, deleteWorkItem, deleteWorkItems, updateWorkItemState, fetchWorkItemDetails, fetchIterations, updateWorkItemFields, createChildTask, addComment, bulkUpdateIterationPath, fetchSprintCapacity, fetchVelocityData, fetchCarryOverItems, fetchMemberComparison, fetchPbiTaskStructure, fetchDailyStandupData } from "@/lib/devops-client";
 import { getGoalForSprint, setGoalForSprint, getSprintGoals } from "@/lib/sprint-goals";
 import { rateLimit } from "@/lib/rate-limit";
+import { requireUser } from "@/lib/auth/user";
 
 export async function GET(request: NextRequest) {
+  const { response: authResponse } = await requireUser();
+  if (authResponse) return authResponse;
+
   const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
   const { allowed, remaining, resetMs } = rateLimit(ip);
 
@@ -232,6 +236,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
+  const { response: authResponse } = await requireUser();
+  if (authResponse) return authResponse;
+
   const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
   const { allowed } = rateLimit(ip);
 
@@ -312,6 +319,9 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const { response: authResponse } = await requireUser();
+  if (authResponse) return authResponse;
+
   const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
   const { allowed } = rateLimit(ip);
 
@@ -345,6 +355,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const { response: authResponse } = await requireUser();
+  if (authResponse) return authResponse;
+
   const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
   const { allowed } = rateLimit(ip);
 

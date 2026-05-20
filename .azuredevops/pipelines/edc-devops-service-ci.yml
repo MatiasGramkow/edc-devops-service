@@ -1,0 +1,118 @@
+# =====================================================================
+# edc-devops-service CI/CD pipeline
+#
+# - main branch pushes -> Build + Deploy to Dev
+# - PR validation      -> Build only
+# - Prod stage can be added later by following the Deploy_Dev pattern.
+# =====================================================================
+
+name: $(Date:yyyyMMdd).$(Rev:r)
+
+trigger:
+  batch: true
+  branches:
+    include:
+      - main
+  paths:
+    exclude:
+      - '**/*.md'
+      - '.gitignore'
+      - 'docs/**'
+
+pr:
+  branches:
+    include:
+      - main
+
+parameters:
+  - name: azureSubscriptionDev
+    displayName: 'Azure DevOps service connection (Dev)'
+    type: string
+    default: 'sc-EDC-Private-WEU-Dev-Public-EdcDevOpsService'
+  - name: nodeVersion
+    displayName: 'Node.js version'
+    type: string
+    default: '20.x'
+  - name: deployAgentPool
+    displayName: 'Self-hosted agent pool (must be allowed past App Service SCM IP restrictions)'
+    type: string
+    default: 'Azure-sub-Group-Shared-WEU-Dev-Data-BuildAgentsWin'
+  - name: deployToDev
+    displayName: 'Deploy to Dev (overrides branch gate)'
+    type: boolean
+    default: false
+
+variables:
+  - name: artifactName
+    value: 'edc-devops-service-app'
+  - name: vmImage
+    value: 'ubuntu-latest'
+  # Variable group containing non-secret runtime config + Key Vault-linked
+  # secrets surfaced via Azure DevOps. Create in DevOps before first run.
+  # Must contain: AZURE_DEVOPS_PAT (secret)
+  - group: edc-devops-service-dev
+
+stages:
+  # -------------------------------------------------------------------
+  # Build
+  # -------------------------------------------------------------------
+  - stage: Build
+    displayName: 'Build'
+    jobs:
+      - job: build_app
+        displayName: 'Build edc-devops-service (Next.js standalone)'
+        pool:
+          vmImage: $(vmImage)
+        steps:
+          - template: templates/build.yml
+            parameters:
+              nodeVersion: ${{ parameters.nodeVersion }}
+              artifactName: $(artifactName)
+
+  # -------------------------------------------------------------------
+  # Deploy to Dev
+  # -------------------------------------------------------------------
+  - stage: Deploy_Dev
+    displayName: 'Deploy to Dev'
+    dependsOn: Build
+    condition: |
+      and(
+        succeeded(),
+        or(
+          eq(variables['Build.SourceBranch'], 'refs/heads/main'),
+          eq('${{ parameters.deployToDev }}', 'true')
+        ),
+        ne(variables['Build.Reason'], 'PullRequest')
+      )
+    jobs:
+      - deployment: deploy_dev
+        displayName: 'Deploy to app-EdcDevOpsService-WEU-Dev'
+        # Self-hosted pool: the App Service SCM endpoint (Kudu) is IP-restricted
+        # to EDC infrastructure, so Microsoft-hosted agents get 403. Build runs
+        # on hosted agents (no SCM access needed); only Deploy needs the pool.
+        pool:
+          name: ${{ parameters.deployAgentPool }}
+        # Environment is the gate for approvals/checks. Configure in
+        # Azure DevOps -> Pipelines -> Environments.
+        environment: 'edc-devops-service-dev'
+        variables:
+          appServiceName: 'app-EdcDevOpsService-WEU-Dev'
+          resourceGroup: 'rg-EdcDevOpsService-WEU-Dev'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - download: current
+                  artifact: $(artifactName)
+                  displayName: 'Download build artifact'
+
+                - task: AzureWebApp@1
+                  displayName: 'Deploy zip to $(appServiceName)'
+                  inputs:
+                    azureSubscription: ${{ parameters.azureSubscriptionDev }}
+                    appType: 'webAppLinux'
+                    appName: '$(appServiceName)'
+                    resourceGroupName: '$(resourceGroup)'
+                    package: '$(Pipeline.Workspace)/$(artifactName)/$(artifactName).zip'
+                    deploymentMethod: 'auto'
+                    startUpCommand: 'node server.js'

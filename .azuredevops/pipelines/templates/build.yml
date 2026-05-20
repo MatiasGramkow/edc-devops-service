@@ -1,0 +1,118 @@
+# =====================================================================
+# Reusable build steps for the edc-devops-service Next.js app.
+#
+# Produces a deployable zip suitable for Azure App Service Linux running
+# `node server.js` from the zip root, using the Next.js standalone output.
+#
+# After `next build` with `output: 'standalone'`, three trees must be
+# merged into a single deployable directory:
+#   .next/standalone/*  -> zip root (provides server.js + minimal node_modules)
+#   .next/static/*      -> zip:/.next/static/
+#   public/*            -> zip:/public/ (only if present)
+# =====================================================================
+parameters:
+  - name: nodeVersion
+    type: string
+    default: '20.x'
+  - name: workingDirectory
+    type: string
+    default: '$(Build.SourcesDirectory)'
+  - name: artifactName
+    type: string
+    default: 'edc-devops-service-app'
+  - name: artifactStagingDirectory
+    type: string
+    default: '$(Build.ArtifactStagingDirectory)'
+
+steps:
+  - checkout: self
+    displayName: 'Checkout sources'
+    fetchDepth: 1
+
+  - task: NodeTool@0
+    displayName: 'Use Node.js ${{ parameters.nodeVersion }}'
+    inputs:
+      versionSpec: '${{ parameters.nodeVersion }}'
+
+  - task: Cache@2
+    displayName: 'Cache Yarn packages'
+    continueOnError: true
+    inputs:
+      key: 'yarn | "$(Agent.OS)" | ${{ parameters.workingDirectory }}/yarn.lock'
+      restoreKeys: |
+        yarn | "$(Agent.OS)"
+      path: '$(Pipeline.Workspace)/.yarn-cache'
+
+  - task: Cache@2
+    displayName: 'Cache Next.js build cache'
+    continueOnError: true
+    inputs:
+      key: 'next | "$(Agent.OS)" | ${{ parameters.workingDirectory }}/yarn.lock | ${{ parameters.workingDirectory }}/next.config.ts'
+      restoreKeys: |
+        next | "$(Agent.OS)" | ${{ parameters.workingDirectory }}/yarn.lock
+        next | "$(Agent.OS)"
+      path: '${{ parameters.workingDirectory }}/.next/cache'
+
+  - script: |
+      set -euo pipefail
+      corepack enable || true
+      yarn --version
+      yarn install --frozen-lockfile --non-interactive
+    displayName: 'yarn install (frozen lockfile)'
+    workingDirectory: ${{ parameters.workingDirectory }}
+    env:
+      YARN_CACHE_FOLDER: $(Pipeline.Workspace)/.yarn-cache
+
+  - script: |
+      set -euo pipefail
+      yarn build
+    displayName: 'yarn build (Next.js standalone)'
+    workingDirectory: ${{ parameters.workingDirectory }}
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+      NEXT_PUBLIC_BUILD_SHA: $(Build.SourceVersion)
+      NEXT_PUBLIC_BUILD_ID: $(Build.BuildId)
+
+  - script: |
+      set -euo pipefail
+
+      SRC="${{ parameters.workingDirectory }}"
+      STAGE="$(Pipeline.Workspace)/standalone-stage"
+
+      echo "Assembling standalone deployment layout in $STAGE"
+      rm -rf "$STAGE"
+      mkdir -p "$STAGE"
+
+      # 1. Standalone server + traced node_modules become the zip root.
+      cp -R "$SRC/.next/standalone/." "$STAGE/"
+
+      # 2. Static assets the runtime expects under .next/static.
+      mkdir -p "$STAGE/.next"
+      cp -R "$SRC/.next/static" "$STAGE/.next/static"
+
+      # 3. /public (only if it exists).
+      if [ -d "$SRC/public" ]; then
+        cp -R "$SRC/public" "$STAGE/public"
+      fi
+
+      echo "Top-level entries in deployment root:"
+      ls -1 "$STAGE"
+
+      if [ ! -f "$STAGE/server.js" ]; then
+        echo "ERROR: server.js missing from staged output - standalone build failed."
+        exit 1
+      fi
+    displayName: 'Assemble standalone deployment layout'
+
+  - task: ArchiveFiles@2
+    displayName: 'Zip standalone output'
+    inputs:
+      rootFolderOrFile: '$(Pipeline.Workspace)/standalone-stage'
+      includeRootFolder: false
+      archiveType: 'zip'
+      archiveFile: '${{ parameters.artifactStagingDirectory }}/${{ parameters.artifactName }}.zip'
+      replaceExistingArchive: true
+
+  - publish: '${{ parameters.artifactStagingDirectory }}/${{ parameters.artifactName }}.zip'
+    artifact: '${{ parameters.artifactName }}'
+    displayName: 'Publish pipeline artifact'

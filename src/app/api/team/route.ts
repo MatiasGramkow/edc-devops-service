@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireUser } from "@/lib/auth/user";
 import { rateLimit } from "@/lib/rate-limit";
 import { getTeamConfig, saveTeamConfig, getActiveMembers } from "@/lib/team-config";
 import { fetchTeamMembers, fetchSprintAnalytics, fetchVacationOverview } from "@/lib/devops-client";
@@ -7,6 +8,9 @@ import type { Activity, TeamMember } from "@/types/devops";
 const VALID_ACTIVITIES: Activity[] = ["Development", "QA", "Release"];
 
 export async function GET(request: NextRequest) {
+  const { response: authResponse } = await requireUser();
+  if (authResponse) return authResponse;
+
   const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
   const { allowed, remaining, resetMs } = rateLimit(ip);
 
@@ -116,6 +120,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  const { response: authResponse } = await requireUser();
+  if (authResponse) return authResponse;
+
   const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
   const { allowed } = rateLimit(ip);
   if (!allowed) {
@@ -146,6 +153,9 @@ export async function PUT(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
+  const { response: authResponse } = await requireUser();
+  if (authResponse) return authResponse;
+
   const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
   const { allowed } = rateLimit(ip);
   if (!allowed) {
@@ -198,6 +208,9 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const { response: authResponse } = await requireUser();
+  if (authResponse) return authResponse;
+
   const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
   const { allowed } = rateLimit(ip);
   if (!allowed) {
@@ -250,6 +263,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const { response: authResponse } = await requireUser();
+  if (authResponse) return authResponse;
+
   const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
   const { allowed } = rateLimit(ip);
   if (!allowed) {

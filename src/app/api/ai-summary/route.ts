@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireUser } from "@/lib/auth/user";
 import { rateLimit } from "@/lib/rate-limit";
 import { isCodebaseAvailable, generateAISummary } from "@/lib/ai-summary";
 
 export async function POST(req: NextRequest) {
+  const { response: authResponse } = await requireUser();
+  if (authResponse) return authResponse;
+
   const ip = req.headers.get("x-forwarded-for") ?? "127.0.0.1";
   const { allowed } = rateLimit(ip);
   if (!allowed) {

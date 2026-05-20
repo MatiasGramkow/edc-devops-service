@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireUser } from "@/lib/auth/user";
 import { transformTopdeskInput, transformTopdeskImage, transformTopdeskTicket } from "@/lib/topdesk-ai";
 import { fetchTicketByNumber, isTopdeskConfigured, TopdeskApiError } from "@/lib/topdesk-client";
 import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
+  const { response: authResponse } = await requireUser();
+  if (authResponse) return authResponse;
+
   const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
   const { allowed } = rateLimit(ip);
 

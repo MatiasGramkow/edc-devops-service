@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireUser } from "@/lib/auth/user";
 import { rateLimit } from "@/lib/rate-limit";
 import { getRoadmap, upsertRoadmapItem, deleteRoadmapItem } from "@/lib/roadmap";
 import type { RoadmapItem } from "@/types/devops";
 
 export async function GET(request: NextRequest) {
+  const { response: authResponse } = await requireUser();
+  if (authResponse) return authResponse;
+
   const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
   const { allowed, remaining, resetMs } = rateLimit(ip);
 
@@ -52,6 +56,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const { response: authResponse } = await requireUser();
+  if (authResponse) return authResponse;
+
   const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
   const { allowed, resetMs } = rateLimit(ip);
 
@@ -81,6 +88,9 @@ export async function POST(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
+  const { response: authResponse } = await requireUser();
+  if (authResponse) return authResponse;
+
   const ip = request.headers.get("x-forwarded-for") ?? "127.0.0.1";
   const { allowed, resetMs } = rateLimit(ip);
 

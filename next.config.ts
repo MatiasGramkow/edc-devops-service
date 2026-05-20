@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   // All Azure DevOps API calls go through server-side route handlers
   // so no external domains need to be exposed to the client
   poweredByHeader: false,
+  output: "standalone",
   headers: async () => [
     {
       source: "/:path*",
